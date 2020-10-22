@@ -1,51 +1,127 @@
+[@bs.module "./domUtility"] external getElementValueById: string => string = "getElementValueById";
+
 [@react.component]
 let make = (~api, ~addresses) => {
-    let (account, setAccount) = React.useState(_ => addresses[0]);
-    let (highfives, setHighFives) = React.useState(_ => None);
+    let (fromHighfives, setFromHighfives) = React.useState(_ => None);
+    let (toHighfives, setToHighfives) = React.useState(_ => None);
 
-    let getAccountHighfives = () => {
-        let _ = Contract.getAccountHighfives(api, account)
+    let getPair = address => {
+        let rec search = (i, a) => {
+            if (i < Array.length(a)) {
+                if (address == Polkadot.Pair.getAddress(a[i])) {
+                    Some(a[i]);
+                } else {
+                    search(i + 1, a);
+                }
+            } else {
+                None
+            };
+        };
+
+        search(0, addresses);
+    }
+
+    let getAccountHighfives = (account, stateFunction) => {
+        let _ = Polkadot.Contract.getAccountHighfives(api, account)
         |> Js.Promise.then_(hf => {
-            Js.log(hf);
-            setHighFives(_ => Some(hf));
+            stateFunction(_ => Some(hf));
             Js.Promise.resolve(Some(hf));
         })
         |> Js.Promise.catch(_ => {
-            setHighFives(_ => None);
+            stateFunction(_ => None);
             Js.Promise.resolve(None);
         });
     };
 
-    React.useEffect1(() => {
-        getAccountHighfives();
-        None;
-    }, [||]);
-
     let sendHighfive = () => {
-        let toAddress = Contract.getAddress(addresses[1]);
-        let _ = Contract.sendHighfive(api, account, toAddress)
-        |> Js.Promise.then_(_value => {
-            Js.log("sent");
-            Js.Promise.resolve(Some(()));
-        })
-        |> Js.Promise.catch(_ => {
-            Js.log("error");
-            Js.Promise.resolve(None);
-        });
+        let fromPairOption = getElementValueById("from-input") -> getPair;
+        let toAddress = getElementValueById("to-input");
+
+        switch (fromPairOption) {
+        | Some(fromPair) => {
+            let _ = Polkadot.Contract.sendHighfive(api, fromPair, toAddress)
+                |> Js.Promise.then_(_value => {
+                    Js.Promise.resolve(Some(()));
+                })
+                |> Js.Promise.catch(_ => {
+                    Js.log("error");
+                    Js.Promise.resolve(None);
+                });
+        };
+        | None => ()
+        };
+    };
+
+    let refreshHighfives = () => {
+        let fromPair = getElementValueById("from-input") -> getPair;
+        switch (fromPair) {
+        | Some(v) => getAccountHighfives(v, setFromHighfives);
+        | None => ()
+        };
+
+        let toPair = getElementValueById("to-input") -> getPair;
+        switch (toPair) {
+        | Some(v) => getAccountHighfives(v, setToHighfives);
+        | None => ()
+        };
+    };
+
+    let getAccountIcons = () => {
+        Array.mapi((i, e) => {
+            let accountAddress = Polkadot.Pair.getAddress(e);
+            <div className="icon" key={string_of_int(i)}>
+                <Polkadot.Identicon 
+                    value={accountAddress}
+                    size=64
+                    theme="polkadot"
+                />
+            </div>
+        },
+        addresses)
+        -> React.array;
     };
 
     <div id="content">
+        <div id="accounts">
+            {getAccountIcons()}
+        </div>
+
         <div id="title">{React.string("Highfive!")}</div>
 
+        <div>
+            <input id="from-input" />
 
-        {React.string(Contract.getAddress(account))}
-        {
-            switch (highfives) {
-            | Some(v) => <div id="test">{React.string("High fives: " ++ v)}</div>
-            | None => <div></div>
-            }
-        }
-        <div onClick={_ => getAccountHighfives()}>{React.string("Press me!")}</div>
-        <div onClick={_ => sendHighfive()}>{React.string("Send Five")}</div>
+            <div>
+                {
+                    switch (fromHighfives) {
+                    | Some(v) => <div className="space">{React.string(v ++ " highfives")}</div>
+                    | None => <div className="space">{React.string("")}</div>
+                    };            
+                }
+            </div>
+        </div>
+
+        <div id="to">
+            {React.string("to")}
+        </div>
+        
+        <div className="space"></div>
+        
+        <div>
+            <input id="to-input" />
+
+            <div>
+                {
+                    switch (toHighfives) {
+                    | Some(v) => <div className="space">{React.string(v ++ " highfives")}</div>
+                    | None => <div className="space">{React.string("")}</div>
+                    };            
+                }
+            </div>
+        </div>
+        <div className="space"></div>
+        <div id="send" onClick={_ => sendHighfive()}>{React.string("Send!")}</div>
+        <div className="space"></div>
+        <div id="refresh" onClick={_ => refreshHighfives()}>{React.string("See highfives")}</div>
     </div>
 }

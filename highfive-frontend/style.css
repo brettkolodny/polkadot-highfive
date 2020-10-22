@@ -1,11 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Grandstander:wght@500&family=Ubuntu:wght@700&display=swap');
+
+body {
+  background-color: #DCEEFB;
+}
+
 #content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 #title {
-    margin: auto 0;
+  margin: auto 0;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  font-size: 64px;
+  font-family: "Ubuntu";
+  color: #0A558C;
 }
 
+#accounts {
+  display: flex;
+  flex-direction: row;
+}
+
+.space {
+  height: 8px;
+  font-family: "Ubuntu";
+  font-size: 12px;
+  color: #186FAF;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+#to {
+  font-family: "Ubuntu";
+  font-size: 24px;
+  color: #DE911D;
+}
+
+.icon {
+  display: flex;
+  flex-direction: column;
+  margin-left: 20px;
+  margin-right: 20px;
+
+  border-radius: 100%;
+
+  box-shadow: 0 2px 4px rgb(0, 0, 0, 0.10);
+}
+
+input {
+  border: none;
+  width: 384px;
+  height: 48px;
+
+  font-size: 24px;
+
+  border-radius: 15px;
+
+  box-shadow: 0 2px 4px rgb(0, 0, 0, 0.15);
+
+  outline: none;
+
+  text-align: center;
+
+  color: #62B0E8;
+}
+
+#refresh {
+  padding: 10px;
+  width: auto;
+  height: 32px;
+  border-radius: 15px;
+
+  background-color: #F0B429;
+  font-family: "Ubuntu";
+  font-size: 24px;
+  color: #243B53;
+  box-shadow: 0 2px 4px rgb(0, 0, 0, 0.15);
+
+  cursor: pointer;
+}
+
+#send {
+  padding: 10px;
+  width: auto;
+  height: 32px;
+  border-radius: 15px;
+
+  background-color: #F0B429;
+  font-family: "Ubuntu";
+  font-size: 24px;
+  color: #243B53;
+  box-shadow: 0 2px 4px rgb(0, 0, 0, 0.15);
+  cursor: pointer;
+}

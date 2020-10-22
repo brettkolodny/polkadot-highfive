@@ -1,6 +1,6 @@
-Contract.connect()
+Polkadot.Api.connect()
 |> Js.Promise.then_(api => {
-    let _ = Contract.getDevAccounts(api)
+    let _ = Polkadot.Api.getDevAccounts(api)
     |> Js.Promise.then_(addresses => {
         switch (ReactDOM.querySelector("#root")) {
         | Some(root) => ReactDOM.render(<Highfive api=api addresses=addresses />, root)
