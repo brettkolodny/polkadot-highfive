@@ -1,16 +1,22 @@
-[@bs.module "./contract"] external getTotalHighfives: unit => Js.Promise.t('a) = "getTotalHighfives";
+Contract.connect()
+|> Js.Promise.then_(api => {
+    let _ = Contract.getDevAccounts(api)
+    |> Js.Promise.then_(addresses => {
+        switch (ReactDOM.querySelector("#root")) {
+        | Some(root) => ReactDOM.render(<Highfive api=api addresses=addresses />, root)
+        | None => ()
+        };
 
-let _ = getTotalHighfives()
-|> Js.Promise.then_(value => {
-    /* setter(_ => Some(value)); */
-    Js.Promise.resolve(Some(value));
+        Js.Promise.resolve(Some(addresses));
     })
+    |> Js.Promise.catch(err => {
+        Js.log(err);
+        Js.Promise.resolve(None);
+    });
+
+    Js.Promise.resolve(Some(api));
+})
 |> Js.Promise.catch(err => {
     Js.log(err);
     Js.Promise.resolve(None);
 });
-
-switch (ReactDOM.querySelector("#root")) {
-| Some(root) => ReactDOM.render(<Counter />, root)
-| None => ()
-};

@@ -2,7 +2,10 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 import { ContractPromise } from "@polkadot/api-contract";
 import { Keyring } from "@polkadot/keyring";
 import 'regenerator-runtime/runtime';
+
 const abi = require("../contract/metadata.json");
+const contractAddressJSON = require("../contract/contract-address.json");
+const contractAddress = contractAddressJSON.address;
 
 async function connect() {
     const provider = new WsProvider('ws://127.0.0.1:9944');
@@ -20,46 +23,58 @@ async function connect() {
     return api;
 }
 
-async function getTotalHighfives() {
-    const api = await connect();
-
+async function getDevAccounts(api) {
     const keyring = new Keyring({ type: 'sr25519' });
 
     const alicePair = keyring.createFromUri("//Alice");
+    const bobPair = keyring.createFromUri("//Bob");
+    const charliePair = keyring.createFromUri("//Charlie");
+    const davePair = keyring.createFromUri("//Dave");
+    const evePair = keyring.createFromUri("//Eve");
 
-    const contract = new ContractPromise(api, abi, "5FZLhVrvGUir2TEhwsxA7gsWKp2oUDubvD4rY8iiVEQTXsRc");
+    return [alicePair, bobPair, charliePair, davePair, evePair];
+}
 
-    // Read from the contract via an RPC call
-    const val = 0; // only useful on isPayable messages
+async function getAccountHighfives(api, pair) {
+    const contract = new ContractPromise(api, abi, contractAddress);
 
-    // NOTE the apps UI specified these in mega units
-    const gasLimit = 3000n * 1000000n;
+    const value = 0;
 
-    console.log(contract.query);
+    const gasLimit = 3000n * 10000000n;
 
-    // Perform the actual read (no params at the end, for the `get` message)
-    // (We perform the send from an account, here using Alice's address)
-    const value = await contract.query.totalHighfives(alicePair.Address, val, gasLimit);
+    const callValue = await contract.query.numHighfives(pair.address, value, gasLimit);
 
-    // console.log(value.result.toHuman());
+    return callValue.output.toHuman();
+}
 
-    // The actual result from RPC as `ContractExecResult`
-    console.log(value.result.toHuman());
+async function sendHighfive(api, fromPair, to) {
+    const contract = new ContractPromise(api, abi, contractAddress);
 
-    // check if the call was successful
-    if (value.result.isSuccess) {
-    // data from the enum
-    const success = value.result.asSuccess;
+    const value = 0;
+    const gasLimit = 3000n * 10000000n;
 
-    // should output 123 as per our initial set (output here is an i32)
-    console.log(value.output.toHuman());
+    const unsub = await contract.tx
+    .sendHighfive(value, gasLimit, to)
+    .signAndSend(fromPair, ({ status, events, dispatchError }) => {
+        if (dispatchError) {
+            if (dispatchError.isModule) {
+            // for module errors, we have the section indexed, lookup
+            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const { documentation, method, section } = decoded;
+    
+            console.log(`${section}.${method}: ${documentation.join(' ')}`);
+            } else {
+            // Other, CannotLookup, BadOrigin, no extra info
+            console.log(error.toString());
+            }
 
-    // the amount of gas consumed (naturally a u64 value()
-    console.log(success.gasConsumed.toHuman());
-    } else {
-    console.error('Call failed');
-    }
-} 
+            unsub();
+        } else {
+            if (status.isInBlock || status.isFinalized) {
+                unsub();
+            }
+        }
+    });
+}
 
-
-export { getTotalHighfives };
+export { connect, getAccountHighfives, getDevAccounts, sendHighfive };
